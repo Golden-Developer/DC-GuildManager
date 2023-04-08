@@ -1,5 +1,6 @@
-package de.goldendeveloper.guildmanager;
+package de.goldendeveloper.guildmanager.server;
 
+import de.goldendeveloper.guildmanager.Main;
 import io.sentry.Sentry;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;

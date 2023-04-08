@@ -83,8 +83,8 @@ public class Events extends ListenerAdapter {
                         if (table.getColumn(MysqlConnection.colmGuild).getAll().getAsString().contains(e.getGuild().getId())) {
                             HashMap<String, SearchResult> row = table.getRow(table.getColumn(MysqlConnection.colmGuild), e.getGuild().getId()).getData();
                             if (!row.get(MysqlConnection.colmWChannel).getAsString().isEmpty() || !row.get(MysqlConnection.colmWChannel).getAsString().isBlank()) {
-                                TextChannel ch = e.getGuild().getTextChannelById(row.get(MysqlConnection.colmWChannel).getAsString());
-                                if (ch != null) {
+                                TextChannel channel = e.getGuild().getTextChannelById(row.get(MysqlConnection.colmWChannel).getAsString());
+                                if (channel != null) {
                                     User user = e.getMember().getUser();
                                     String ServerName = e.getGuild().getName();
                                     EmbedBuilder emb = new EmbedBuilder();
@@ -94,39 +94,29 @@ public class Events extends ListenerAdapter {
                                     emb.setTimestamp(new Date().toInstant());
                                     emb.setThumbnail(user.getAvatarUrl());
                                     emb.setFooter("@Golden-Developer");
-                                    ch.sendMessageEmbeds(emb.build()).queue();
+                                    channel.sendMessageEmbeds(emb.build()).queue();
                                 } else {
                                     Member Owner = e.getGuild().getOwner();
                                     if (Owner != null) {
-                                        Owner.getUser().openPrivateChannel().queue(channel -> {
-                                            EmbedBuilder em = new EmbedBuilder();
-                                            em.setColor(Color.RED);
-                                            em.setTitle("**ERROR**");
-                                            em.setDescription("Der angegebene Willkommens Channel konnte auf **" + e.getGuild().getName() + "** nicht gefunden werden!");
-                                            em.setTimestamp(new Date().toInstant());
-                                            em.setFooter("@Golden-Developer");
-                                            channel.sendMessageEmbeds(em.build()).queue();
-                                        });
+                                        sendErrorMessage(Owner, "Der angegebene Willkommens Channel konnte auf **" + e.getGuild().getName() + "** nicht gefunden werden!");
                                     }
                                 }
                             }
                             if (!row.get(MysqlConnection.colmJRole).getAsString().isEmpty() || !row.get(MysqlConnection.colmJRole).getAsString().isBlank()) {
                                 Role role = e.getGuild().getRoleById(row.get(MysqlConnection.colmJRole).getAsString());
                                 Member bot = e.getGuild().getMember(e.getJDA().getSelfUser());
-                                if (role != null && bot != null && bot.canInteract(role)) {
-                                    e.getGuild().addRoleToMember(e.getMember(), role).queue();
+                                Member Owner = e.getGuild().getOwner();
+                                if (role != null && bot != null ) {
+                                    if (bot.canInteract(role))  {
+                                        e.getGuild().addRoleToMember(e.getMember(), role).queue();
+                                    } else {
+                                        if (Owner != null) {
+                                            sendErrorMessage(Owner, "Mit der angegebene Join Rolle konnte auf **" + e.getGuild().getName() + "** nicht Interagiert werden!");
+                                        }
+                                    }
                                 } else {
-                                    Member Owner = e.getGuild().getOwner();
                                     if (Owner != null) {
-                                        Owner.getUser().openPrivateChannel().queue(channel -> {
-                                            EmbedBuilder em = new EmbedBuilder();
-                                            em.setColor(Color.RED);
-                                            em.setTitle("**ERROR**");
-                                            em.setDescription("Die angegebene Join Rolle konnte auf **" + e.getGuild().getName() + "** nicht gefunden oder nicht mit ihr Interagiert werden werden!");
-                                            em.setTimestamp(new Date().toInstant());
-                                            em.setFooter("@Golden-Developer");
-                                            channel.sendMessageEmbeds(em.build()).queue();
-                                        });
+                                        sendErrorMessage(Owner, "Die angegebene Join Rolle konnte auf **" + e.getGuild().getName() + "** nicht gefunden oder nicht mit ihr Interagiert werden!");
                                     }
                                 }
                             }
@@ -194,6 +184,20 @@ public class Events extends ListenerAdapter {
         } catch (Exception exception) {
             exception.printStackTrace();
             Sentry.captureException(exception);
+        }
+    }
+
+    public void sendErrorMessage(Member member, String message) {
+        if (member != null) {
+            member.getUser().openPrivateChannel().queue(channel -> {
+                EmbedBuilder em = new EmbedBuilder();
+                em.setColor(Color.RED);
+                em.setTitle("**ERROR**");
+                em.setDescription(message);
+                em.setTimestamp(new Date().toInstant());
+                em.setFooter("@Golden-Developer");
+                channel.sendMessageEmbeds(em.build()).queue();
+            });
         }
     }
 }

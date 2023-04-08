@@ -1,7 +1,11 @@
 package de.goldendeveloper.guildmanager;
 
 import de.goldendeveloper.guildmanager.discord.Discord;
+import de.goldendeveloper.guildmanager.server.ServerCommunicator;
+import de.goldendeveloper.guildmanager.server.ServerListener;
 import io.sentry.Sentry;
+
+import java.io.IOException;
 
 public class Main {
 
@@ -25,6 +29,7 @@ public class Main {
         Sentry(config.getSentryDNS());
         try {
             serverCommunicator = new ServerCommunicator(config.getServerHostname(), config.getServerPort());
+            new Thread(ServerListener::new).start();
             mysqlConnection = new MysqlConnection(config.getMysqlHostname(), config.getMysqlUsername(), config.getMysqlPassword(), config.getMysqlPort());
             discord = new Discord(config.getDiscordToken());
         } catch (Exception exception) {
